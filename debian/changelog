@@ -1,0 +1,11 @@
+ros-hydro-s3000-laser (0.1.0-0precise) precise; urgency=high
+
+  * Adding packages dependencies and removing unused includes
+  * Modifying package description for Hydro branch
+  * Adding files for Hydro
+  * Initial commit
+  * Contributors: RobotnikRoman, Roman Navarro Garcia
+
+ -- Román Navarro <rnavarro@robotnik.es>  Thu, 07 Aug 2014 22:00:00 -0000
+
+

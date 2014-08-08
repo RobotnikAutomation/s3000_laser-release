@@ -1,0 +1,12 @@
+Source: ros-hydro-s3000-laser
+Section: misc
+Priority: extra
+Maintainer: Román Navarro <rnavarro@robotnik.es>
+Build-Depends: debhelper (>= 9.0.0), ros-hydro-catkin, ros-hydro-diagnostic-msgs, ros-hydro-diagnostic-updater, ros-hydro-message-generation, ros-hydro-roscpp, ros-hydro-self-test, ros-hydro-sensor-msgs, ros-hydro-tf
+Homepage: http://wiki.ros.org/s3000_laser
+Standards-Version: 3.9.2
+
+Package: ros-hydro-s3000-laser
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-hydro-diagnostic-msgs, ros-hydro-diagnostic-updater, ros-hydro-message-generation, ros-hydro-roscpp, ros-hydro-self-test, ros-hydro-sensor-msgs, ros-hydro-tf
+Description: The s3000_laser package
