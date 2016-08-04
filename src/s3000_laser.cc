@@ -47,6 +47,7 @@ private:
 	sensor_msgs::LaserScan reading;
 
 	string port;
+	int baud_rate;
 
 	self_test::TestRunner self_test_;
 	diagnostic_updater::Updater diagnostic_;
@@ -69,7 +70,7 @@ private:
 	std::string error_status_;
 	//! Name of the frame associated
 	string frame_id_;
-
+	string topic_name;
 	double desired_freq_;
 	diagnostic_updater::FrequencyStatus freq_diag_;
 	//! Enables/disables the scan publication
@@ -84,14 +85,30 @@ public:
 	desired_freq_(20), 
 	freq_diag_(diagnostic_updater::FrequencyStatusParam(&desired_freq_, &desired_freq_, 0.05))
 	{
+	    int serial_datasize;
+	    string serial_parity;
+	    float angle_min_deg, angle_max_deg, angle_increment_deg;
+	    
 		ros::NodeHandle laser_node_handle(node_handle_, "s3000_laser");
-		private_node_handle_.param("port", port, string("/dev/ttyUSB1"));
-
+		private_node_handle_.param("port", port, string("/dev/ttyUSB0"));
+		private_node_handle_.param("baud_rate", baud_rate, 500000);
+		private_node_handle_.param<float>("range_min", reading.range_min, 0 );
+		private_node_handle_.param<float>("range_max", reading.range_max, 40 );
+		private_node_handle_.param<float>("angle_min", angle_min_deg, -100 );
+		private_node_handle_.param<float>("angle_max", angle_max_deg, 100 );
+		private_node_handle_.param<float>("angle_increment", angle_increment_deg, 0.25 );
+		private_node_handle_.param("topic_name", topic_name, string("/scan"));
 		private_node_handle_.param<bool> ("publish_tf", publish_tf_, false);
 		private_node_handle_.param<bool> ("publish_scan", publish_scan_, true);
-		laser_data_pub_ = laser_node_handle.advertise<sensor_msgs::LaserScan>("/scan", 100);
+		private_node_handle_.param<int> ("serial_datasize", serial_datasize, 8);
+		private_node_handle_.param<string> ("serial_parity", serial_parity, "none");
+		laser_data_pub_ = laser_node_handle.advertise<sensor_msgs::LaserScan>(topic_name, 1);
 		running = false;
 		private_node_handle_.param("frame_id", frame_id_, string("/laser"));
+		
+		reading.angle_min = deg_to_rad(angle_min_deg);
+		reading.angle_max = deg_to_rad(angle_max_deg);
+		reading.angle_increment = deg_to_rad(angle_increment_deg);
 		reading.header.frame_id = frame_id_;
 			
 		self_test_.add("Connect Test", this, &s3000node::ConnectTest);
@@ -99,12 +116,13 @@ public:
 		diagnostic_.add( freq_diag_ );
 		diagnostic_.add( "Laser S3000 Status", this, &s3000node::deviceStatus );
 		ROS_INFO("s3000node: Port = %s", port.c_str());
+		ROS_INFO("s3000node: Baudrate = %d", baud_rate);
 		
 		// Advertises new service to enable/disable the scan publication
 		enable_disable_srv_ = private_node_handle_.advertiseService("enable_disable",  &s3000node::EnableDisable, this);
 		
 		// Create SickS3000 in the given port
-		laser = new SickS3000( port );
+		laser = new SickS3000( port, baud_rate, serial_parity, serial_datasize );
 	}
 
 	~s3000node()
@@ -176,38 +194,17 @@ private:
 	}
 	
 	//! Gets the sensor data and publishes 
-	void getData(sensor_msgs::LaserScan& data)
+	void getData(sensor_msgs::LaserScan& scan)
 	{
-		bool bValidData = false;
-
-		laser->ReadLaser( data, bValidData );
-
-		//// If valid data, publish it
-		if (bValidData) {
-			data.header.stamp = ros::Time::now();
-			data.header.frame_id = frame_id_;
+		//// If valid scan, publish it
+		if ( laser->ReadLaser(scan) ) 
+		{
+			scan.header.stamp = ros::Time::now();
+			scan.header.frame_id = frame_id_;
 			if(publish_scan_)	// Publishes only if enabled
-				laser_data_pub_.publish( data );
+				laser_data_pub_.publish( scan );
 			freq_diag_.tick();
 		}
-
-		/*
-		// Robotnik - to test unit
-		if (publish_tf_) {
-		// create a tf message
-		geometry_msgs::TransformStamped imu_trans;
-		imu_trans.header.stamp = data.header.stamp;
-		imu_trans.header.frame_id = "laser";   //odom_frame_id.c_str();
-		imu_trans.child_frame_id = "base_link";
-		imu_trans.transform.translation.x = 0.0;
-		imu_trans.transform.translation.y = 0.0;
-		imu_trans.transform.translation.z = 0.0;
-		imu_trans.transform.rotation = data.orientation;
-		//send the transform
-		imu_broadcaster.sendTransform(imu_trans);
-		}
-		*/  
-
 	}
 
 	//! Updates the diagnostic status

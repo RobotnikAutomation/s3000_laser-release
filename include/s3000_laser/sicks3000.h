@@ -39,9 +39,8 @@
 #include <sensor_msgs/LaserScan.h>
 #include <s3000_laser/SerialDevice.h>
 
-#define S3000_DEFAULT_TRANSFERRATE 500000     //
-#define S3000_DEFAULT_PARITY	   "none"
-#define S3000_DEFAULT_DATA_SIZE    8
+//! Converts degrees to radians
+inline double deg_to_rad(double val) { return val*M_PI/180.0; }
 
 // The laser device class.
 class SickS3000
@@ -49,19 +48,19 @@ class SickS3000
   public:
 
     // Constructor
-    SickS3000( std::string port );
+    SickS3000( std::string port, int baudrate, std::string parity, int datasize );
 
     // Destructor
     ~SickS3000();
 
     //! Open the port
-    int Open();
+    bool Open();
 
     //! Close the port
-    int Close();
+    bool Close();
 
     //! Read and process data
-    void ReadLaser( sensor_msgs::LaserScan& scan_msg, bool& bValidData ); // public periodic function
+    bool ReadLaser( sensor_msgs::LaserScan& scan );
   
   private:
 
@@ -70,41 +69,24 @@ class SickS3000
     int ProcessLaserData( sensor_msgs::LaserScan& scan_msg, bool& bValidData ); // public periodic function
 
     // Calculates CRC for a telegram
-    unsigned short CreateCRC(uint8_t *data, ssize_t len);
+    static unsigned short CreateCRC(const uint8_t *data, ssize_t len);
 
-    // Get the time (in ms)
-    int64_t GetTime();
-
-    void SetScannerParams(sensor_msgs::LaserScan& scan, int data_count);
+    static bool SetScannerParams(sensor_msgs::LaserScan& scan, int data_count);
 
   protected:
 
     // serial port
-    SerialDevice* serial;
-
-    // Defines if laser is mounted inverted
-    int mirror;
-
-    // Scan width and resolution.
-    int scan_width, scan_res;
-
-    // Start and end scan angles (for restricted scan).  These are in
-    // units of 0.01 degrees.
-    int min_angle, max_angle;
-
-    // Start and end scan segments (for restricted scan).  These are
-    // the values used by the laser.
-    int scan_min_segment, scan_max_segment;
+    SerialDevice serial_;
 
     bool recognisedScanner;
 
     // rx buffer
-    uint8_t * rx_buffer;
+    uint8_t* rx_buffer;
     unsigned int rx_buffer_size;
     unsigned int rx_count;
-
-    // sensor_msgs::LaserScan scan;
-
-  };
+    
+    static const size_t READ_BUFFER_SIZE=2000;
+    char read_buffer_[READ_BUFFER_SIZE];
+};
 
 
