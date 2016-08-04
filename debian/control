@@ -1,0 +1,12 @@
+Source: ros-indigo-s3000-laser
+Section: misc
+Priority: extra
+Maintainer: Roberto Guzmán <rguzman@robotnik.es>
+Build-Depends: debhelper (>= 9.0.0), ros-indigo-catkin, ros-indigo-diagnostic-msgs, ros-indigo-diagnostic-updater, ros-indigo-message-generation, ros-indigo-roscpp, ros-indigo-self-test, ros-indigo-sensor-msgs, ros-indigo-tf
+Homepage: http://wiki.ros.org/s3000_laser
+Standards-Version: 3.9.2
+
+Package: ros-indigo-s3000-laser
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-indigo-diagnostic-msgs, ros-indigo-diagnostic-updater, ros-indigo-message-generation, ros-indigo-roscpp, ros-indigo-self-test, ros-indigo-sensor-msgs, ros-indigo-tf
+Description: The s3000_laser package
